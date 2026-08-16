@@ -63,12 +63,6 @@ TUPLE_ORDERS_SPENDING: tuple[str, str, tuple[str, str, str], type[tuple]] = \
     ('spending', 'REAL', 'NOT NULL'),
     tuple)
 
-TUPLE_ORDERS_INVESTMENT_STATUS: tuple[str, str, tuple[str, str, str], type[tuple]] = \
-    ('ORDERS.INVESTMENT_STATUS',
-     'investment_status',
-    ('investment_status', 'BIT', 'NOT NULL'),
-    tuple)
-
 TUPLE_ORDERS_POSITION: tuple[str, str, tuple[str, str, str], type[tuple]] = \
     ('ORDERS.POSITION',
      'position',
@@ -90,7 +84,6 @@ LIST_ORDERS_COLUMN_NAMES: list[str] = [TUPLE_ORDERS_ORDER_DATE[_index_tuple.OPTI
                                        TUPLE_ORDERS_ORDER_PRICE[_index_tuple.OPTION_NAME],
                                        TUPLE_ORDERS_ORDER_VOLUME[_index_tuple.OPTION_NAME],
                                        TUPLE_ORDERS_SPENDING[_index_tuple.OPTION_NAME],
-                                       TUPLE_ORDERS_INVESTMENT_STATUS[_index_tuple.OPTION_NAME],
                                        TUPLE_ORDERS_POSITION[_index_tuple.OPTION_NAME],
                                        TUPLE_ORDERS_PERFORMANCE[_index_tuple.OPTION_NAME]]
 

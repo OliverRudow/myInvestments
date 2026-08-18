@@ -18,7 +18,7 @@ from myinvestments import myTableSQLOrdersList, myOrdersDefinition
 from mysharesdefinition import myPerformanceWatchListDefinitions
 from mystaticwatchlist import myStaticWatchList
 from myperformancewatchlist import myPerformanceWatchList
-from watchlist_me import myReportTopList
+from mywatchlist import myReportTopList
 
 STR_WORKING_DIRECTORY: str = '/Users/oliverrudow/PycharmProjects/Data'
 

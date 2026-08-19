@@ -340,7 +340,7 @@ class MyTableSQLOrdersList(myTableSQL.MyTableSQL):
 
                 exit(1)
 
-    def place_order(self, str_isin: str, int_order_volume: int, float_ask: float, float_price) -> None:
+    def place_order(self, str_isin: str, int_order_volume: int, float_ask: float, float_price: float) -> None:
 
         _order_date = self._str_orders_list_order_date_column_name
         _order_number = self._str_orders_list_order_number_column_name
@@ -352,48 +352,54 @@ class MyTableSQLOrdersList(myTableSQL.MyTableSQL):
         _position = self._str_orders_list_position_column_name
         _performance = self._str_orders_list_performance_column_name
 
-        if not isinstance(float_ask, float):
-
-            float_ask = 0
-
-        _spending_value: float = round(float_ask * int_order_volume, 2)
-
-        if not isinstance(float_price, float):
+        if not (isinstance(float_price, float) or  isinstance(float_price, int)):
 
             float_price = 0
 
         _position_value: float = round(float_price * int_order_volume, 2)
 
-        _performance_value: float = round((_position_value - _spending_value) / _spending_value * 100, 2)
+        if not (isinstance(float_ask, float) or isinstance(float_ask, int)):
 
-        str_text = (f'INSERT INTO {self._str_sql_schema}.{self._str_table_name} '
-                    f'({_order_date}, {_order_number}, {_order_id}, {_isin}, '
-                    f'  {_price}, {_volume}, {_spending}, {_position}, {_performance}) '
-                    f'VALUES ( '
-                    f'  date("now"), '
-                    f'  COALESCE((SELECT MAX({_order_number}) FROM {self._str_sql_schema}.{self._str_table_name} '
-                    f'      WHERE {_order_date} = date("now")), 0) + 1, '
-                    f'  date("now") || "-" || (COALESCE((SELECT MAX({_order_number}) FROM {self._str_sql_schema}.{self._str_table_name} '
-                    f'      WHERE {_order_date} = date("now")), 0) + 1), '
-                    f'  "{str_isin}", '
-                    f'  {float_ask},'
-                    f'  {int_order_volume}, {_spending_value}, {_position_value}, {_performance_value})')
+            float_ask = float_price
 
-        if self._my_sql_connection and self._my_sql_cursor:
+        if not float_ask > 0:
 
-            try:
+            float_ask = float_price
 
-                self._my_sql_cursor.execute(str_text)
-                self._my_sql_connection.commit()
+        _spending_value: float = round(float_ask * int_order_volume, 2)
 
-            except sqlite3.OperationalError as err:
+        if _spending_value > 0:
 
-                print(
-                    f'---- Operational Error in {__title__}, '
-                    f'{self.place_order.__name__} ----, \n'
-                    f'---- the Text {str_text} has caused an Error {err} ! ----')
+            _performance_value: float = round((_position_value - _spending_value) / _spending_value * 100, 2)
 
-                exit(1)
+            str_text = (f'INSERT INTO {self._str_sql_schema}.{self._str_table_name} '
+                        f'({_order_date}, {_order_number}, {_order_id}, {_isin}, '
+                        f'  {_price}, {_volume}, {_spending}, {_position}, {_performance}) '
+                        f'VALUES ( '
+                        f'  date("now"), '
+                        f'  COALESCE((SELECT MAX({_order_number}) FROM {self._str_sql_schema}.{self._str_table_name} '
+                        f'      WHERE {_order_date} = date("now")), 0) + 1, '
+                        f'  date("now") || "-" || (COALESCE((SELECT MAX({_order_number}) FROM {self._str_sql_schema}.{self._str_table_name} '
+                        f'      WHERE {_order_date} = date("now")), 0) + 1), '
+                        f'  "{str_isin}", '
+                        f'  {float_ask},'
+                        f'  {int_order_volume}, {_spending_value}, {_position_value}, {_performance_value})')
+
+            if self._my_sql_connection and self._my_sql_cursor:
+
+                try:
+
+                    self._my_sql_cursor.execute(str_text)
+                    self._my_sql_connection.commit()
+
+                except sqlite3.OperationalError as err:
+
+                    print(
+                        f'---- Operational Error in {__title__}, '
+                        f'{self.place_order.__name__} ----, \n'
+                        f'---- the Text {str_text} has caused an Error {err} ! ----')
+
+                    exit(1)
 
     def get_overall_spending(self) -> float:
 
@@ -448,7 +454,7 @@ class MyTableSQLOrdersList(myTableSQL.MyTableSQL):
 
                 print(
                     f'---- Operational Error in {__title__}, '
-                    f'{self.get_overall_position.__name__} ----, \n'
+                    f'{self.get_total_position.__name__} ----, \n'
                     f'---- the Text {str_text} has caused an Error {err} ! ----')
 
                 exit(1)

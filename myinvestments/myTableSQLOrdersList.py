@@ -401,6 +401,38 @@ class MyTableSQLOrdersList(myTableSQL.MyTableSQL):
 
                     exit(1)
 
+    @property
+    def get_max_order_id(self) -> str:
+
+        order_id = self._str_orders_list_order_id_column_name
+
+        str_text = f'SELECT MAX({order_id}) FROM {self._str_sql_schema}.{self._str_table_name} '
+
+        if self._my_sql_connection and self._my_sql_cursor:
+
+            try:
+
+                self._my_sql_cursor.execute(str_text)
+
+                _result = self._my_sql_cursor.fetchone()
+
+                self._my_sql_connection.commit()
+
+                return _result[0]
+
+            except sqlite3.OperationalError as err:
+
+                print(
+                    f'---- Operational Error in {__title__}, '
+                    f'{self.get_max_order_id.__name__} ----, \n'
+                    f'---- the Text {str_text} has caused an Error {err} ! ----')
+
+                exit(1)
+
+        else:
+
+            return ''
+
     def get_overall_spending(self) -> float:
 
         _spending = self._str_orders_list_spending_column_name
@@ -454,7 +486,7 @@ class MyTableSQLOrdersList(myTableSQL.MyTableSQL):
 
                 print(
                     f'---- Operational Error in {__title__}, '
-                    f'{self.get_total_position.__name__} ----, \n'
+                    f'{self.get_total_position().__name__} ----, \n'
                     f'---- the Text {str_text} has caused an Error {err} ! ----')
 
                 exit(1)

@@ -14,11 +14,16 @@ from typing import Optional
 from mytuple import myTuple
 from mydatabase import mySQLDataBase
 from myfilebase import myFileBase
-from myinvestments import myTableSQLOrdersList, myOrdersDefinition
+from myinvestments import (myTableSQLOrdersList, myOrdersDefinition, myTableSQLOrdersPerformanceWatchList,
+                           myTableSQLOrdersAnalystWatchList, myTableSQLOrdersFundamentalsWatchList,
+                           myTableSQLOrdersDerivateWatchList, myTableSQLOrdersRankingWatchList)
 from mysharesdefinition import myPerformanceWatchListDefinitions
 from mystaticwatchlist import myStaticWatchList
 from myperformancewatchlist import myPerformanceWatchList
-from mywatchlist import myReportTopList
+from myanalystwatchlist import myAnalystWatchList
+from myfundamentalswatchlist import myFundamentalsWatchList
+from myderivatewatchlist import myDerivateWatchList
+from mywatchlist import myReportTopList, myRankingWatchList
 
 STR_WORKING_DIRECTORY: str = '/Users/oliverrudow/PycharmProjects/Data'
 
@@ -51,6 +56,21 @@ class MyOrders(mySQLDataBase.MySQLDataBase):
     _my_table_sql_orders_list: myTableSQLOrdersList.MyTableSQLOrdersList = (
         dataclasses.field(repr=False, default_factory=type(myTableSQLOrdersList.MyTableSQLOrdersList)))
 
+    _my_table_sql_orders_performance_list: myTableSQLOrdersPerformanceWatchList.MyTableSQLOrdersPerformanceWatchList = (
+        dataclasses.field(repr=False, default_factory=type(myTableSQLOrdersPerformanceWatchList.MyTableSQLOrdersPerformanceWatchList)))
+
+    _my_table_sql_orders_analyst_list: myTableSQLOrdersAnalystWatchList.MyTableSQLOrdersAnalystWatchList = (
+        dataclasses.field(repr=False, default_factory=type(myTableSQLOrdersAnalystWatchList.MyTableSQLOrdersAnalystWatchList)))
+
+    _my_table_sql_orders_fundamentals_list: myTableSQLOrdersFundamentalsWatchList.MyTableSQLOrdersFundamentalsWatchList = (
+        dataclasses.field(repr=False, default_factory=type(myTableSQLOrdersFundamentalsWatchList.MyTableSQLOrdersFundamentalsWatchList)))
+
+    _my_table_sql_orders_derivate_list: myTableSQLOrdersDerivateWatchList.MyTableSQLOrdersDerivateWatchList = (
+        dataclasses.field(repr=False, default_factory=type(myTableSQLOrdersDerivateWatchList.MyTableSQLOrdersDerivateWatchList)))
+
+    _my_table_sql_orders_ranking_list: myTableSQLOrdersRankingWatchList.MyTableSQLOrdersRankingWatchList = (
+        dataclasses.field(repr=False, default_factory=type(myTableSQLOrdersDerivateWatchList.MyTableSQLOrdersDerivateWatchList)))
+
     # column indices
     _int_orders_list_order_date_column_index: int = dataclasses.field(repr=False, default=0)
     _int_orders_list_order_number_column_index: int = dataclasses.field(repr=False, default=0)
@@ -73,6 +93,8 @@ class MyOrders(mySQLDataBase.MySQLDataBase):
     _str_orders_list_position_column_name: str = dataclasses.field(repr=False, default='')
     _str_orders_list_performance_column_name: str = dataclasses.field(repr=False, default='')
 
+    _str_order_list_order_id_value: str = dataclasses.field(repr=False, default='')
+
     _list_column_names: list = dataclasses.field(repr=False, default_factory=list)
 
     # static watch list
@@ -83,8 +105,25 @@ class MyOrders(mySQLDataBase.MySQLDataBase):
     _my_performance_watch_list: myPerformanceWatchList.MyPerformanceWatchList = dataclasses.field(repr=False,
                                                         default_factory=myPerformanceWatchList.MyPerformanceWatchList)
 
+    # analyst watch list
+    _my_analyst_watch_list: myAnalystWatchList.MyAnalystWatchList = dataclasses.field(repr=False,
+                                                        default_factory=type(myAnalystWatchList.MyAnalystWatchList))
+
+    # fundamentals watch list
+    _my_fundamentals_watch_list: myFundamentalsWatchList.MyFundamentalsWatchList = dataclasses.field(repr=False,
+                                                default_factory=type(myFundamentalsWatchList.MyFundamentalsWatchList))
+
+    # derivate watch list
+    _my_derivate_watch_list: myDerivateWatchList.MyDerivateWatchList = dataclasses.field(repr=False,
+                                                        default_factory=type(myDerivateWatchList.MyDerivateWatchList))
+
+    # report watch list
     _my_report_top_list: myReportTopList.MyReportTopList = dataclasses.field(init=False,
-                                                                             default_factory=myReportTopList.MyReportTopList)
+                                                                        default_factory=myReportTopList.MyReportTopList)
+
+    # ranking watch list
+    _my_ranking_watch_list: myRankingWatchList.MyRankingWatchList = dataclasses.field(init=False,
+                                                            default_factory=type(myRankingWatchList.MyRankingWatchList))
 
     _str_performance_watch_list_quote_isin_column_name: str = dataclasses.field(repr=False, default='')
     _str_performance_watch_list_ask_column_name: str = dataclasses.field(repr=False, default='')
@@ -137,6 +176,26 @@ class MyOrders(mySQLDataBase.MySQLDataBase):
                                                             self._my_sql_connection,
                                                             self._my_sql_cursor)
 
+        self._my_table_sql_orders_performance_list = myTableSQLOrdersPerformanceWatchList.MyTableSQLOrdersPerformanceWatchList(
+                                                             self._my_sql_connection,
+                                                             self._my_sql_cursor)
+
+        self._my_table_sql_orders_analyst_list = myTableSQLOrdersAnalystWatchList.MyTableSQLOrdersAnalystWatchList(
+                                                            self._my_sql_connection,
+                                                            self._my_sql_cursor)
+
+        self._my_table_sql_orders_fundamentals_list = myTableSQLOrdersFundamentalsWatchList.MyTableSQLOrdersFundamentalsWatchList(
+                                                            self._my_sql_connection,
+                                                            self._my_sql_cursor)
+
+        self._my_table_sql_orders_derivate_list = myTableSQLOrdersDerivateWatchList.MyTableSQLOrdersDerivateWatchList(
+                                                            self._my_sql_connection,
+                                                            self._my_sql_cursor)
+
+        self._my_table_sql_orders_ranking_list = myTableSQLOrdersRankingWatchList.MyTableSQLOrdersRankingWatchList(
+                                                            self._my_sql_connection,
+                                                            self._my_sql_cursor)
+
         self._list_column_names = self._my_table_sql_orders_list.get_column_names()
 
         if self._list_column_names.__len__() == 0:
@@ -155,6 +214,21 @@ class MyOrders(mySQLDataBase.MySQLDataBase):
                                                                                         self._str_working_directory,
                                                                                         STR_CURRENT_DATA_BASE_FILE_NAME)
 
+        self._my_analyst_watch_list = myAnalystWatchList.MyAnalystWatchList(None,
+                                                                            self._str_working_directory,
+                                                                            STR_CURRENT_DATA_BASE_FILE_NAME)
+
+        self._my_fundamentals_watch_list = myFundamentalsWatchList.MyFundamentalsWatchList(None,
+                                                                                    self._str_working_directory,
+                                                                                    STR_CURRENT_DATA_BASE_FILE_NAME)
+
+        self._my_derivate_watch_list = myDerivateWatchList.MyDerivateWatchList(None,
+                                                                              self._str_working_directory,
+                                                                              STR_CURRENT_DATA_BASE_FILE_NAME)
+
+        self._my_ranking_watch_list = myRankingWatchList.MyRankingWatchList(self._str_working_directory,
+                                                                            STR_CURRENT_DATA_BASE_FILE_NAME)
+
         self._my_report_top_list = myReportTopList.MyReportTopList(self._str_working_directory,
                                                                    STR_CURRENT_DATA_BASE_FILE_NAME)
 
@@ -163,7 +237,6 @@ class MyOrders(mySQLDataBase.MySQLDataBase):
         self._str_target_directory_for_safety_copy = STR_TARGET_DIRECTORY_FOR_SAFETY_COPY
 
         self._my_file.set_target_directory_for_copy(self._str_target_directory_for_safety_copy)
-
 
     def _init_orders_list_column_indices(self) -> None:
 
@@ -234,6 +307,10 @@ class MyOrders(mySQLDataBase.MySQLDataBase):
         self._str_performance_watch_list_current_price_column_name = (
             myPerformanceWatchListDefinitions.TUPLE_PERFORMANCE_WATCH_LIST_CURRENT_PRICE)[self._index_tuple.OPTION_NAME]
 
+    def _get_order_id(self) -> None:
+
+        self._str_order_list_order_id_value = self._my_table_sql_orders_list.get_max_order_id
+
     def automatic_order(self):
 
         _list = self._my_report_top_list.get_combined_overall_score_twenty_day_change_table()[1:6]
@@ -260,6 +337,70 @@ class MyOrders(mySQLDataBase.MySQLDataBase):
                                                                    int_order,
                                                                    _data[self._str_performance_watch_list_ask_column_name],
                                                                    _data[self._str_performance_watch_list_current_price_column_name])
+
+                        self._get_order_id()
+
+                        del _data['quote_isin']
+
+                        _data_updated = {self._str_orders_list_order_id_column_name: self._str_order_list_order_id_value}
+
+                        _data_updated.update(_data)
+
+                        self._my_table_sql_orders_performance_list.set_sql_table_performance_watch_list_entire_row(_data_updated)
+
+                    if self._my_analyst_watch_list.check_quote_in_watch_list(str_isin):
+
+                        _data = self._my_analyst_watch_list.get_analyst_watch_list_data_per_quote_isin(str_isin)
+
+                        del _data['quote_isin']
+
+                        _data_updated = {
+                            self._str_orders_list_order_id_column_name: self._str_order_list_order_id_value}
+
+                        _data_updated.update(_data)
+
+                        self._my_table_sql_orders_analyst_list.set_sql_table_analyst_watch_list_entire_row(_data_updated)
+
+                    if self._my_fundamentals_watch_list.check_quote_in_watch_list(str_isin):
+
+                        _data = self._my_fundamentals_watch_list.get_fundamentals_watch_list_data_per_quote_isin(str_isin)
+
+                        del _data['quote_isin']
+
+                        _data_updated = {
+                            self._str_orders_list_order_id_column_name: self._str_order_list_order_id_value}
+
+                        _data_updated.update(_data)
+
+                        self._my_table_sql_orders_fundamentals_list.set_sql_table_fundamentals_watch_list_entire_row(_data_updated)
+
+                    if self._my_derivate_watch_list.check_quote_in_watch_list(str_isin):
+
+                        _data = self._my_derivate_watch_list.get_derivate_watch_list_data_per_quote_isin(
+                            str_isin)
+
+                        del _data['quote_isin']
+
+                        _data_updated = {
+                            self._str_orders_list_order_id_column_name: self._str_order_list_order_id_value}
+
+                        _data_updated.update(_data)
+
+                        self._my_table_sql_orders_derivate_list.set_sql_table_derivate_watch_list_entire_row(_data_updated)
+
+                    if self._my_ranking_watch_list.check_quote_in_watch_list(str_isin):
+
+                        _data = self._my_ranking_watch_list.get_ranking_watch_list_data_per_quote_isin(
+                            str_isin)
+
+                        del _data['quote_isin']
+
+                        _data_updated = {
+                            self._str_orders_list_order_id_column_name: self._str_order_list_order_id_value}
+
+                        _data_updated.update(_data)
+
+                        self._my_table_sql_orders_ranking_list.set_sql_table_ranking_watch_list_entire_row(_data_updated)
 
                 else:
 
@@ -309,10 +450,24 @@ class MyOrders(mySQLDataBase.MySQLDataBase):
 
         self._my_performance_watch_list.close_sql_data_base()
 
+        self._my_static_watch_list.close_sql_data_base()
+
+        self._my_analyst_watch_list.close_sql_data_base()
+
+        self._my_derivate_watch_list.close_sql_data_base()
+
+        self._my_fundamentals_watch_list.close_sql_data_base()
+
+        self._my_performance_watch_list.close_sql_data_base()
+
+        self._my_ranking_watch_list.close_sql_data_base()
+
+        self._my_report_top_list.close_sql_data_base()
+
 if __name__ == "__main__":
 
     my_orders_list = MyOrders()
     my_orders_list.update_orders()
-    # my_orders_list.automatic_order()
+    my_orders_list.automatic_order()
     print(my_orders_list.get_overall_spending())
     my_orders_list.close_sql_data_base()

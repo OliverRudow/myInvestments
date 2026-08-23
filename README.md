@@ -45,3 +45,4 @@ Initialize `myInvestments` by setting an active working directory and defining y
 © 2026, Brain Center Höfen. All rights reserved.  
 **Author:** Oliver Rudow (<oliver.rudow@googlemail.com>)  
 **Version:** 0.1.0
+

@@ -87,7 +87,7 @@ LIST_ORDERS_COLUMN_NAMES: list[str] = [TUPLE_ORDERS_ORDER_DATE[_index_tuple.OPTI
                                        TUPLE_ORDERS_POSITION[_index_tuple.OPTION_NAME],
                                        TUPLE_ORDERS_PERFORMANCE[_index_tuple.OPTION_NAME]]
 
-INDEX_PRIMARY_KEY = LIST_ORDERS_COLUMN_NAMES.index(TUPLE_ORDERS_ORDER_ID[_index_tuple.OPTION_NAME])
+INDEX_PRIMARY_KEY = 0
 
 
 

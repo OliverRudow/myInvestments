@@ -245,73 +245,55 @@ class MyTableSQLOrdersList(myTableSQL.MyTableSQL):
         _quote_isin = self._str_performance_watch_list_quote_isin_column_name
         _price =  self._str_performance_watch_list_current_price_column_name
 
-        if self._list_all_distinct_isin.__len__() > 0:
-
-            str_text = f'ATTACH DATABASE "{str_performance_data_base_file_name}" AS db_performance'
+        # 1. (Falsy-Evaluation)
+        if self._list_all_distinct_isin:
 
             if self._my_sql_connection and self._my_sql_cursor:
 
                 try:
+                    # ATTACH ausführen
+                    self._my_sql_cursor.execute(
+                        f'ATTACH DATABASE "{str_performance_data_base_file_name}" AS db_performance')
 
-                    self._my_sql_cursor.executescript(str_text)
+                    # 3. SQL-Query mit Platzhaltern (?) statt String-Formatierung
+                    # Das UPDATE wurde so umgeschrieben, dass es ALLE ISINs auf einmal verarbeitet
+                    sql_update = f"""
+                        UPDATE {self._str_sql_schema}.{self._str_table_name}
+                        SET {_position} = (
+                            SELECT {_volume}
+                            FROM {self._str_sql_schema}.{self._str_table_name}
+                            WHERE {self._str_sql_schema}.{self._str_table_name}.{_isin} = :isin
+                        ) * (
+                            SELECT {_price}
+                            FROM db_performance.{performance_table_name}
+                            WHERE db_performance.{performance_table_name}.{_quote_isin} = :isin
+                        )
+                        WHERE {_isin} = :isin
+                    """
+
+                    # 4. executemany() führt die Query für alle ISINs in einem Rutsch aus
+                    # Wir übergeben eine Liste von Dicts für die Named Placeholders (:isin)
+                    param_list = [{"isin": isin} for isin in self._list_all_distinct_isin]
+                    self._my_sql_cursor.executemany(sql_update, param_list)
+
+                    # 5. Nur EIN Commit nach allen Updates (enormer Geschwindigkeitsvorteil)
                     self._my_sql_connection.commit()
 
                 except sqlite3.OperationalError as err:
-
                     print(
-                        f'---- Operational Error in {__title__}, '
-                        f'{self.update_all_positions.__name__} ----, \n'
-                        f'---- the Text {str_text} has caused an Error {err} ! ----')
-
+                        f'---- Operational Error in {__title__}, {self.update_all_positions.__name__} ----\n'
+                        f'---- An error occurred during database operations: {err} ----'
+                    )
                     exit(1)
 
-            for _elem_isin in self._list_all_distinct_isin:
-
-                str_text = (f' UPDATE {self._str_sql_schema}.{self._str_table_name} '
-                            f'   SET {_position} = ( '
-                            f'      SELECT {_volume} '
-                            f'      FROM {self._str_sql_schema}.{self._str_table_name} '
-                            f'      WHERE {self._str_sql_schema}.{self._str_table_name}.{_isin} = \'{_elem_isin}\' '
-                            f'   ) * ( '
-                            f'   SELECT {_price} '
-                            f'      FROM db_performance.{performance_table_name} '
-                            f'      WHERE db_performance.{performance_table_name}.{_quote_isin} = \'{_elem_isin}\' '
-                            f'   ) '
-                            f'  WHERE {_isin} =  \'{_elem_isin}\' ')
-
-                if self._my_sql_connection and self._my_sql_cursor:
-
+                finally:
+                    # 6. DETACH im finally-Block garantiert, dass die DB sauber getrennt wird,
+                    # selbst wenn oben ein Fehler auftritt.
                     try:
-
-                        self._my_sql_cursor.executescript(str_text)
+                        self._my_sql_cursor.execute('DETACH DATABASE db_performance')
                         self._my_sql_connection.commit()
-
-                    except sqlite3.OperationalError as err:
-
-                        print(
-                            f'---- Operational Error in {__title__}, '
-                            f'{self.update_all_positions.__name__} ----, \n'
-                            f'---- the Text {str_text} has caused an Error {err} ! ----')
-
-                        exit(1)
-
-            str_text = f' DETACH DATABASE db_performance'
-
-            if self._my_sql_connection and self._my_sql_cursor:
-
-                try:
-
-                    self._my_sql_cursor.executescript(str_text)
-                    self._my_sql_connection.commit()
-
-                except sqlite3.OperationalError as err:
-
-                    print(
-                        f'---- Operational Error in {__title__}, '
-                        f'{self.update_all_positions.__name__} ----, \n'
-                        f'---- the Text {str_text} has caused an Error {err} ! ----')
-
-                    exit(1)
+                    except sqlite3.OperationalError:
+                        pass  # Verhindert Absturz, falls DETACH fehlschlägt, weil ATTACH schon fehlschlug
 
     def update_all_performances(self):
 

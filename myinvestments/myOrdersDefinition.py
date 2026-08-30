@@ -21,6 +21,12 @@ DATA_BASE_TIMEOUT: float = 5.0
 
 DATA_BASE_CONNECTION_URI: bool = True
 
+TUPLE_ORDERS_ORDER_ID: tuple[str, str, tuple[str, str, str, str], type[tuple]] = \
+    ('ORDERS.ORDER_ID',
+    'order_id',
+    ('order_id', 'TEXT', 'NOT NULL', 'PRIMARY KEY'),
+    tuple)
+
 TUPLE_ORDERS_ORDER_DATE: tuple[str, str, tuple[str, str, str], type[tuple]] = \
     ('ORDERS.ORDER_DATE',
     'order_date',
@@ -33,16 +39,22 @@ TUPLE_ORDERS_ORDER_NUMBER: tuple[str, str, tuple[str, str, str], type[tuple]] = 
     ('order_number', 'INTEGER', 'NOT NULL'),
     tuple)
 
-TUPLE_ORDERS_ORDER_ID: tuple[str, str, tuple[str, str, str, str], type[tuple]] = \
-    ('ORDERS.ORDER_ID',
-    'order_id',
-    ('order_id', 'TEXT', 'NOT NULL', 'PRIMARY KEY'),
-    tuple)
-
 TUPLE_ORDERS_ISIN: tuple[str, str, tuple[str, str, str], type[tuple]] = \
     ('ORDERS.ISIN',
      'isin',
     ('isin', 'TEXT', 'NOT NULL'),
+    tuple)
+
+TUPLE_ORDERS_NAME: tuple[str, str, tuple[str, str, str], type[tuple]] = \
+    ('ORDERS.NAME',
+     'name',
+    ('name', 'TEXT', 'NOT NULL'),
+    tuple)
+
+TUPLE_ORDERS_CURRENCY: tuple[str, str, tuple[str, str, str], type[tuple]] = \
+    ('ORDERS.CURRENCY',
+     'currency',
+    ('currency', 'TEXT', 'NOT NULL'),
     tuple)
 
 TUPLE_ORDERS_ORDER_PRICE: tuple[str, str, tuple[str, str, str], type[tuple]] = \
@@ -77,10 +89,12 @@ TUPLE_ORDERS_PERFORMANCE: tuple[str, str, tuple[str, str, str], type[tuple]] = \
 
 _index_tuple = myTuple.MyTuple
 
-LIST_ORDERS_COLUMN_NAMES: list[str] = [TUPLE_ORDERS_ORDER_DATE[_index_tuple.OPTION_NAME],
+LIST_ORDERS_COLUMN_NAMES: list[str] = [TUPLE_ORDERS_ORDER_ID[_index_tuple.OPTION_NAME],
+                                       TUPLE_ORDERS_ORDER_DATE[_index_tuple.OPTION_NAME],
                                        TUPLE_ORDERS_ORDER_NUMBER[_index_tuple.OPTION_NAME],
-                                       TUPLE_ORDERS_ORDER_ID[_index_tuple.OPTION_NAME],
                                        TUPLE_ORDERS_ISIN[_index_tuple.OPTION_NAME],
+                                       TUPLE_ORDERS_NAME[_index_tuple.OPTION_NAME],
+                                       TUPLE_ORDERS_CURRENCY[_index_tuple.OPTION_NAME],
                                        TUPLE_ORDERS_ORDER_PRICE[_index_tuple.OPTION_NAME],
                                        TUPLE_ORDERS_ORDER_VOLUME[_index_tuple.OPTION_NAME],
                                        TUPLE_ORDERS_SPENDING[_index_tuple.OPTION_NAME],

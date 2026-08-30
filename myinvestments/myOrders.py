@@ -76,6 +76,7 @@ class MyOrders(mySQLDataBase.MySQLDataBase):
     _int_orders_list_order_number_column_index: int = dataclasses.field(repr=False, default=0)
     _int_orders_list_order_id_column_index: int = dataclasses.field(repr=False, default=0)
     _int_orders_list_isin_column_index: int = dataclasses.field(repr=False, default=0)
+    _int_orders_list_currency_column_index: int = dataclasses.field(repr=False, default=0)
     _int_orders_list_order_price_column_index: int = dataclasses.field(repr=False, default=0)
     _int_orders_list_order_volume_column_index: int = dataclasses.field(repr=False, default=0)
     _int_orders_list_spending_column_index: int = dataclasses.field(repr=False, default=0)
@@ -87,6 +88,7 @@ class MyOrders(mySQLDataBase.MySQLDataBase):
     _str_orders_list_order_number_column_name: str = dataclasses.field(repr=False, default='')
     _str_orders_list_order_id_column_name: str = dataclasses.field(repr=False, default='')
     _str_orders_list_isin_column_name: str = dataclasses.field(repr=False, default='')
+    _str_orders_list_currency_column_name: str = dataclasses.field(repr=False, default='')
     _str_orders_list_order_price_column_name: str = dataclasses.field(repr=False, default='')
     _str_orders_list_order_volume_column_name: str = dataclasses.field(repr=False, default='')
     _str_orders_list_spending_column_name: str = dataclasses.field(repr=False, default='')
@@ -252,6 +254,9 @@ class MyOrders(mySQLDataBase.MySQLDataBase):
         self._int_orders_list_isin_column_index = self._list_column_names.index(
             myOrdersDefinition.TUPLE_ORDERS_ISIN[self._index_tuple.OPTION_NAME])
 
+        self._int_orders_list_currency_column_index = self._list_column_names.index(
+            myOrdersDefinition.TUPLE_ORDERS_CURRENCY[self._index_tuple.OPTION_NAME])
+
         self._int_orders_list_order_price_column_index = self._list_column_names.index(
             myOrdersDefinition.TUPLE_ORDERS_ORDER_PRICE[self._index_tuple.OPTION_NAME])
 
@@ -279,6 +284,9 @@ class MyOrders(mySQLDataBase.MySQLDataBase):
             self._list_column_names)[self._int_orders_list_order_id_column_index]
 
         self._str_orders_list_isin_column_name = (
+            self._list_column_names)[self._int_orders_list_isin_column_index]
+
+        self._str_orders_list_currency_column_name = (
             self._list_column_names)[self._int_orders_list_isin_column_index]
 
         self._str_orders_list_order_price_column_name = (
@@ -333,7 +341,13 @@ class MyOrders(mySQLDataBase.MySQLDataBase):
 
                         _data = self._my_performance_watch_list.get_performance_watch_list_data_per_quote_isin(str_isin)
 
+                        _curr_sym = self._my_static_watch_list.get_quote_currency_for_isin(str_isin)
+
+                        _name = self._my_static_watch_list.get_quote_name_for_isin(str_isin)
+
                         self._my_table_sql_orders_list.place_order(str_isin,
+                                                                   _name,
+                                                                   _curr_sym,
                                                                    int_order,
                                                                    _data[self._str_performance_watch_list_ask_column_name],
                                                                    _data[self._str_performance_watch_list_current_price_column_name])

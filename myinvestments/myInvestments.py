@@ -14,7 +14,7 @@ from typing import Optional
 from mytuple import myTuple
 from mydatabase import mySQLDataBase
 from myfilebase import myFileBase
-from myinvestments import myOrders, myOrdersDefinition, myTableSQLInvestmentsList, myInvestmentsDefinition
+from myinvestments import myOrders, myOrdersDefinition, myTableSQLInvestmentsList, myInvestmentsDefinition, myExchange
 
 
 STR_WORKING_DIRECTORY: str = '/Users/oliverrudow/PycharmProjects/Data'
@@ -58,6 +58,8 @@ class MyInvestments(mySQLDataBase.MySQLDataBase):
     _list_column_names: list = dataclasses.field(repr=False, default_factory=list)
 
     _my_orders: myOrders.MyOrders = dataclasses.field(repr=False, default_factory=type(myOrders.MyOrders))
+
+    _my_exchange: myExchange.MyExchange = dataclasses.field(repr=False, default_factory=type(myExchange.MyExchange))
 
     def __init__(self, str_working_directory: Optional[str] = None,
              str_data_base_filename: Optional[str] = None) -> None:
@@ -118,6 +120,10 @@ class MyInvestments(mySQLDataBase.MySQLDataBase):
 
         self._my_orders = myOrders.MyOrders(self._str_working_directory, self._str_data_base_file_name)
 
+        self._my_exchange = myExchange.MyExchange(self._str_working_directory, self._str_data_base_file_name)
+
+        self._my_exchange.set_exchange_rate_table()
+
         self._str_target_directory_for_safety_copy = STR_TARGET_DIRECTORY_FOR_SAFETY_COPY
 
         self._my_file.set_target_directory_for_copy(self._str_target_directory_for_safety_copy)
@@ -153,5 +159,5 @@ class MyInvestments(mySQLDataBase.MySQLDataBase):
 if __name__ == "__main__":
 
     my_investments_list = MyInvestments()
-    my_investments_list.perform_automatic_investments()
+    # my_investments_list.perform_automatic_investments()
     my_investments_list.evaluate_investments()

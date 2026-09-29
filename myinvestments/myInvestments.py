@@ -155,9 +155,22 @@ class MyInvestments(mySQLDataBase.MySQLDataBase):
         self._my_orders.update_orders()
         self._my_orders.automatic_order()
 
+    def get_latest_invest_data(self) -> tuple:
+
+        return self._my_table_sql_investments_list.get_latest_invest_data()
+
+    def get_all_invest_data(self) -> list[tuple]:
+
+        return self._my_table_sql_investments_list.get_all_invest_data()
+
+    def get_performance_vs_date_data(self) -> list[tuple]:
+
+        return self._my_table_sql_investments_list.get_performance_vs_date_data()
+
 
 if __name__ == "__main__":
 
     my_investments_list = MyInvestments()
     # my_investments_list.perform_automatic_investments()
-    my_investments_list.evaluate_investments()
+    # my_investments_list.evaluate_investments()
+    print(my_investments_list.get_performance_vs_date_data())

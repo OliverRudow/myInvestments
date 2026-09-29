@@ -175,4 +175,119 @@ class MyTableSQLInvestmentsList(myTableSQL.MyTableSQL):
 
                 exit(1)
 
+    def get_latest_invest_data(self) -> tuple:
+
+        _date = self._str_investments_date_column_name
+
+        str_text = f'SELECT * FROM {self._str_sql_schema}.{self._str_table_name} ORDER BY {_date} DESC LIMIT 1'
+
+        if self._my_sql_connection and self._my_sql_cursor:
+
+            try:
+
+                self._my_sql_cursor.execute(str_text)
+
+                result = tuple(round(x, 2) for x in self._my_sql_cursor.fetchone())
+
+                self._my_sql_connection.commit()
+
+                if result is not None and result.__len__() > 0:
+
+                    return tuple(result)
+
+                else:
+
+                    return ()
+
+
+            except sqlite3.OperationalError as err:
+
+                print(
+                    f'---- Operational Error in {__title__}, '
+                    f'{self.get_latest_invest_data.__name__} ----, \n'
+                    f'---- the Text {str_text} has caused an Error {err} ! ----')
+
+                exit(1)
+
+        else:
+
+            return ()
+
+
+    def get_all_invest_data(self) -> list[tuple]:
+
+        str_text = f'SELECT * FROM {self._str_sql_schema}.{self._str_table_name}'
+
+        if self._my_sql_connection and self._my_sql_cursor:
+
+            try:
+
+                self._my_sql_cursor.execute(str_text)
+
+                result = self._my_sql_cursor.fetchall()
+
+                self._my_sql_connection.commit()
+
+                if result is not None and result.__len__() > 0:
+
+                    return result
+
+                else:
+
+                    return []
+
+
+            except sqlite3.OperationalError as err:
+
+                print(
+                    f'---- Operational Error in {__title__}, '
+                    f'{self.get_all_invest_data.__name__} ----, \n'
+                    f'---- the Text {str_text} has caused an Error {err} ! ----')
+
+                exit(1)
+
+        else:
+
+            return []
+
+
+    def get_performance_vs_date_data(self) -> list[tuple]:
+
+        _date = self._str_investments_date_column_name
+        _performance = self._str_investments_performance_column_name
+
+        str_text = f'SELECT {_date}, {_performance} FROM {self._str_sql_schema}.{self._str_table_name} ORDER BY {_date}'
+
+        if self._my_sql_connection and self._my_sql_cursor:
+
+            try:
+
+                self._my_sql_cursor.execute(str_text)
+
+                result = self._my_sql_cursor.fetchall()
+
+                self._my_sql_connection.commit()
+
+                if result is not None and result.__len__() > 0:
+
+                    return result
+
+                else:
+
+                    return []
+
+
+            except sqlite3.OperationalError as err:
+
+                print(
+                    f'---- Operational Error in {__title__}, '
+                    f'{self.get_performance_vs_date_data.__name__} ----, \n'
+                    f'---- the Text {str_text} has caused an Error {err} ! ----')
+
+                exit(1)
+
+        else:
+
+            return []
+
 

@@ -171,6 +171,7 @@ class MyInvestments(mySQLDataBase.MySQLDataBase):
 if __name__ == "__main__":
 
     my_investments_list = MyInvestments()
-    # my_investments_list.perform_automatic_investments()
-    # my_investments_list.evaluate_investments()
+    my_investments_list.perform_automatic_investments()
+    my_investments_list.evaluate_investments()
+    # my_investments_list.get_latest_invest_data()
     print(my_investments_list.get_performance_vs_date_data())

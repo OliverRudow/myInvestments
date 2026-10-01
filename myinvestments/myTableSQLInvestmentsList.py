@@ -187,13 +187,15 @@ class MyTableSQLInvestmentsList(myTableSQL.MyTableSQL):
 
                 self._my_sql_cursor.execute(str_text)
 
-                result = tuple(round(x, 2) for x in self._my_sql_cursor.fetchone())
+                result = self._my_sql_cursor.fetchone()
 
                 self._my_sql_connection.commit()
 
                 if result is not None and result.__len__() > 0:
 
-                    return tuple(result)
+                    result = (result[0], *(round(x, 2) for x in result[1:]))
+
+                    return result
 
                 else:
 

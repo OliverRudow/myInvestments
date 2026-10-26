@@ -14,12 +14,17 @@ from typing import Optional
 from mytuple import myTuple
 from mydatabase import mySQLDataBase
 from myfilebase import myFileBase
-from myinvestments import myOrders, myOrdersDefinition, myTableSQLInvestmentsList, myInvestmentsDefinition, myExchange
+from myinvestments import (myOrders, myOrdersDefinition, myTableSQLInvestmentsList, myInvestmentsDefinition, myExchange,
+                           myPerformanceAssessment)
+from myperformancewatchlist import myPerformanceWatchList
+from mytimeseries import myScoresTimeSeries, myIndustriesTimeSeriesDefinitions
 
 
 STR_WORKING_DIRECTORY: str = '/Users/oliverrudow/PycharmProjects/Data'
 
 STR_CURRENT_DATA_BASE_FILE_NAME: str = 'shares_data_base.db'
+
+STR_TIME_SERIES_DATA_BASE_FILE_NAME: str = 'time_series_data_base.db'
 
 STR_TARGET_DIRECTORY_FOR_SAFETY_COPY: str = '/Users/oliverrudow/Library/Mobile Documents/com~apple~CloudDocs/PycharmProjects/Data'
 
@@ -48,6 +53,14 @@ class MyInvestments(mySQLDataBase.MySQLDataBase):
     _my_table_sql_investments_list: myTableSQLInvestmentsList.MyTableSQLInvestmentsList = (
         dataclasses.field(repr=False, default_factory=type(myTableSQLInvestmentsList.MyTableSQLInvestmentsList)))
 
+    # performance watch list
+    _my_performance_watch_list: myPerformanceWatchList.MyPerformanceWatchList = dataclasses.field(repr=False,
+                                                default_factory=myPerformanceWatchList.MyPerformanceWatchList)
+
+    # score time series
+    _my_scores_time_series: myScoresTimeSeries.MyScoresTimeSeries = dataclasses.field(repr=False,
+                                                default_factory=myScoresTimeSeries.MyScoresTimeSeries)
+
     # column names
     _str_investments_date_column_name: str = dataclasses.field(repr=False, default='')
     _str_investments_spending_column_name: str = dataclasses.field(repr=False, default='')
@@ -57,9 +70,14 @@ class MyInvestments(mySQLDataBase.MySQLDataBase):
 
     _list_column_names: list = dataclasses.field(repr=False, default_factory=list)
 
+    _list_distinct_isin_list: list = dataclasses.field(repr=False, default_factory=list)
+
     _my_orders: myOrders.MyOrders = dataclasses.field(repr=False, default_factory=type(myOrders.MyOrders))
 
     _my_exchange: myExchange.MyExchange = dataclasses.field(repr=False, default_factory=type(myExchange.MyExchange))
+
+    _my_performance_assessment: myPerformanceAssessment.MyPerformanceAssessment = (
+        dataclasses.field(repr=False, default_factory=type(myPerformanceAssessment.MyPerformanceAssessment)))
 
     def __init__(self, str_working_directory: Optional[str] = None,
              str_data_base_filename: Optional[str] = None) -> None:
@@ -118,11 +136,24 @@ class MyInvestments(mySQLDataBase.MySQLDataBase):
 
         self._init_investments_list_column_names()
 
-        self._my_orders = myOrders.MyOrders(self._str_working_directory, self._str_data_base_file_name)
-
         self._my_exchange = myExchange.MyExchange(self._str_working_directory, self._str_data_base_file_name)
 
         self._my_exchange.set_exchange_rate_table()
+
+        self._my_orders = myOrders.MyOrders(self._str_working_directory, self._str_data_base_file_name)
+
+        self._my_orders.update_orders()
+
+        self._list_distinct_isin_list = self._my_orders.get_distinct_isin_list()
+
+        self._my_performance_watch_list = myPerformanceWatchList.MyPerformanceWatchList(None,
+                                                                                       self._str_working_directory,
+                                                                                       STR_CURRENT_DATA_BASE_FILE_NAME)
+
+        self._my_scores_time_series = myScoresTimeSeries.MyScoresTimeSeries(self._str_working_directory,
+                                                            STR_TIME_SERIES_DATA_BASE_FILE_NAME)
+
+        self._my_performance_assessment = myPerformanceAssessment.MyPerformanceAssessment(self._str_working_directory)
 
         self._str_target_directory_for_safety_copy = STR_TARGET_DIRECTORY_FOR_SAFETY_COPY
 
@@ -150,9 +181,43 @@ class MyInvestments(mySQLDataBase.MySQLDataBase):
         self._my_table_sql_investments_list.evaluate_investment(self._my_orders.get_overall_spending(),
                                                                 self._my_orders.get_total_position(),
                                                                 0)
+
+    def evaluate_individual_shares(self):
+
+        if self._list_distinct_isin_list.__len__() > 0:
+
+            for elem in self._list_distinct_isin_list:
+
+                print('------------------------------')
+                print('')
+                print(f'--- isin: {elem} ---')
+                print('')
+                print(f'--- performance change: {self._my_performance_watch_list.get_performance_change_from_one_five_twenty_days_per_quote_isin(elem)} ---')
+                print(f'--- score values: {self._my_scores_time_series.get_score_value_one_five_twenty_delta_one_per_isin(elem)} ---')
+                print('')
+
+                self._my_performance_assessment.set_performance_vector(
+                    self._my_orders.get_today_performance_vector_per_isin(elem))
+
+                self._my_performance_assessment.set_list_order_vectors(
+                    self._my_orders.get_order_vectors_per_isin(elem))
+
+                self._my_performance_assessment.calc_order_vectors_working_days()
+
+                self._my_performance_assessment.calc_order_vectors_total_performance()
+
+                self._my_performance_assessment.calc_order_vectors_overall_score_change()
+
+                self._my_performance_assessment.calc_order_vectors_analyst_change()
+
+                self._my_performance_assessment.calc_order_vectors_derivate_change()
+
+                self._my_performance_assessment.calc_order_vectors_fundamentals_change()
+
+                self._my_performance_assessment.calc_order_vectors_performance_change()
+
     def perform_automatic_investments(self) -> None:
 
-        self._my_orders.update_orders()
         self._my_orders.automatic_order()
 
     def get_latest_invest_data(self) -> tuple:
@@ -163,6 +228,10 @@ class MyInvestments(mySQLDataBase.MySQLDataBase):
 
         return self._my_table_sql_investments_list.get_all_invest_data()
 
+    def get_distinct_isin_list(self) -> list:
+
+        return  self._list_distinct_isin_list
+
     def get_performance_vs_date_data(self) -> list[tuple]:
 
         return self._my_table_sql_investments_list.get_performance_vs_date_data()
@@ -171,7 +240,9 @@ class MyInvestments(mySQLDataBase.MySQLDataBase):
 if __name__ == "__main__":
 
     my_investments_list = MyInvestments()
-    my_investments_list.perform_automatic_investments()
+    # my_investments_list.perform_automatic_investments()
     my_investments_list.evaluate_investments()
     # my_investments_list.get_latest_invest_data()
-    print(my_investments_list.get_performance_vs_date_data())
+    my_investments_list.evaluate_individual_shares()
+    # print(my_investments_list.get_distinct_isin_list())
+    # print(my_investments_list.get_performance_vs_date_data())

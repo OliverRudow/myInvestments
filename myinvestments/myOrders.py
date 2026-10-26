@@ -17,7 +17,7 @@ from myfilebase import myFileBase
 from myinvestments import (myTableSQLOrdersList, myOrdersDefinition, myTableSQLOrdersPerformanceWatchList,
                            myTableSQLOrdersAnalystWatchList, myTableSQLOrdersFundamentalsWatchList,
                            myTableSQLOrdersDerivateWatchList, myTableSQLOrdersRankingWatchList)
-from mysharesdefinition import myPerformanceWatchListDefinitions
+from mysharesdefinition import myPerformanceWatchListDefinitions, myOrderVectorDefinition
 from mystaticwatchlist import myStaticWatchList
 from myperformancewatchlist import myPerformanceWatchList
 from myanalystwatchlist import myAnalystWatchList
@@ -30,6 +30,8 @@ STR_WORKING_DIRECTORY: str = '/Users/oliverrudow/PycharmProjects/Data'
 STR_CURRENT_DATA_BASE_FILE_NAME: str = 'shares_data_base.db'
 
 STR_TARGET_DIRECTORY_FOR_SAFETY_COPY: str = '/Users/oliverrudow/Library/Mobile Documents/com~apple~CloudDocs/PycharmProjects/Data'
+
+INT_LAST_INDEX_TO_ORDER_FROM_RANKING_LIST: int = 5
 
 
 @dataclasses.dataclass(init=False)
@@ -95,9 +97,25 @@ class MyOrders(mySQLDataBase.MySQLDataBase):
     _str_orders_list_position_column_name: str = dataclasses.field(repr=False, default='')
     _str_orders_list_performance_column_name: str = dataclasses.field(repr=False, default='')
 
+    # order vector segment names
+    _str_order_vector_header_segment_name: str = dataclasses.field(repr=False, default='')
+    _str_order_vector_ranking_segment_name: str = dataclasses.field(repr=False, default='')
+    _str_order_vector_analyst_segment_name: str = dataclasses.field(repr=False, default='')
+    _str_order_vector_derivate_segment_name: str = dataclasses.field(repr=False, default='')
+    _str_order_vector_fundamentals_segment_name: str = dataclasses.field(repr=False, default='')
+    _str_order_vector_performance_segment_name: str = dataclasses.field(repr=False, default='')
+
+    _list_order_vector_segment_names: list = dataclasses.field(init=False, default_factory=list)
+
     _str_order_list_order_id_value: str = dataclasses.field(repr=False, default='')
 
     _list_column_names: list = dataclasses.field(repr=False, default_factory=list)
+
+    _list_shares_to_order: list = dataclasses.field(repr=False, default_factory=list)
+
+    _list_isin_histogram_order_list: list[tuple] = dataclasses.field(repr=False, default_factory=list)
+
+    _list_distinct_isin_in_order_list: list = dataclasses.field(repr=False, default_factory=list)
 
     # static watch list
     _my_static_watch_list: myStaticWatchList.MyStaticWatchList = dataclasses.field(repr=False,
@@ -163,6 +181,12 @@ class MyOrders(mySQLDataBase.MySQLDataBase):
 
         self._list_column_names = []
 
+        self._list_shares_to_order = []
+
+        self._list_isin_histogram_order_list = []
+
+        self._list_distinct_isin_in_order_list = []
+
         # SQL Data Base Name
         self.set_sql_data_base_name(self._my_file.get_entire_file_name)
 
@@ -208,6 +232,8 @@ class MyOrders(mySQLDataBase.MySQLDataBase):
 
         self._init_orders_list_column_names()
 
+        self._init_order_vector_segment_names()
+
         self._my_static_watch_list = myStaticWatchList.MyStaticWatchList(None,
                                                                          self._str_working_directory,
                                                                          STR_CURRENT_DATA_BASE_FILE_NAME)
@@ -239,6 +265,10 @@ class MyOrders(mySQLDataBase.MySQLDataBase):
         self._str_target_directory_for_safety_copy = STR_TARGET_DIRECTORY_FOR_SAFETY_COPY
 
         self._my_file.set_target_directory_for_copy(self._str_target_directory_for_safety_copy)
+
+        self._get_isin_histogram_from_order_list()
+
+        self._get_distinct_isin_list()
 
     def _init_orders_list_column_indices(self) -> None:
 
@@ -304,6 +334,26 @@ class MyOrders(mySQLDataBase.MySQLDataBase):
         self._str_orders_list_performance_column_name = (
             self._list_column_names)[self._int_orders_list_performance_column_index]
 
+    def _init_order_vector_segment_names(self) -> None:
+
+        self._str_order_vector_header_segment_name = (
+            myOrderVectorDefinition.TUPLE_ORDER_VECTOR_HEADER)[self._index_tuple.DATA_CONTENT][0]
+
+        self._str_order_vector_ranking_segment_name  = (
+            myOrderVectorDefinition.TUPLE_ORDER_VECTOR_RANKING)[self._index_tuple.DATA_CONTENT][0]
+
+        self._str_order_vector_analyst_segment_name = (
+            myOrderVectorDefinition.TUPLE_ORDER_VECTOR_ANALYST)[self._index_tuple.DATA_CONTENT][0]
+
+        self._str_order_vector_derivate_segment_name = (
+            myOrderVectorDefinition.TUPLE_ORDER_VECTOR_DERIVATE)[self._index_tuple.DATA_CONTENT][0]
+
+        self._str_order_vector_fundamentals_segment_name = (
+            myOrderVectorDefinition.TUPLE_ORDER_VECTOR_FUNDAMENTALS)[self._index_tuple.DATA_CONTENT][0]
+
+        self._str_order_vector_performance_segment_name = (
+            myOrderVectorDefinition.TUPLE_ORDER_VECTOR_PERFORMANCE)[self._index_tuple.DATA_CONTENT][0]
+
     def _init_performance_watch_list_column_names(self) -> None:
 
         self._str_performance_watch_list_quote_isin_column_name = (
@@ -319,15 +369,39 @@ class MyOrders(mySQLDataBase.MySQLDataBase):
 
         self._str_order_list_order_id_value = self._my_table_sql_orders_list.get_max_order_id
 
+    def _get_shares_to_order(self) -> None:
+
+        self._list_shares_to_order = self._my_report_top_list.get_combined_overall_score_twenty_day_change_table()[:INT_LAST_INDEX_TO_ORDER_FROM_RANKING_LIST]
+
+    def _get_isin_histogram_from_order_list(self) -> None:
+
+        self._list_isin_histogram_order_list = self._my_table_sql_orders_list.get_isin_histogram_from_order_list()
+
+    def _get_distinct_isin_list(self) -> None:
+
+        if self._list_isin_histogram_order_list.__len__() == 0:
+
+            self._get_isin_histogram_from_order_list()
+
+        self._list_distinct_isin_in_order_list = [elem[0] for elem in self._list_isin_histogram_order_list]
+
+    def get_shares_to_order(self)-> list:
+
+        self._get_shares_to_order()
+
+        return self._list_shares_to_order
+
     def automatic_order(self):
 
-        _list = self._my_report_top_list.get_combined_overall_score_twenty_day_change_table()[1:6]
+        self._get_shares_to_order()
 
-        _list_isin_to_order = [element[0] for element in _list]
+        if self._list_shares_to_order.__len__() > 0:
 
-        for elem in _list_isin_to_order:
+            _list_isin_to_order = [element[0] for element in self._list_shares_to_order]
 
-            self.place_order(elem, 1)
+            for elem in _list_isin_to_order:
+
+                self.place_order(elem, 1)
 
     def place_order(self, str_isin: str, int_order: int) -> None:
 
@@ -458,6 +532,126 @@ class MyOrders(mySQLDataBase.MySQLDataBase):
 
         return self._my_table_sql_orders_list.get_total_position()
 
+    def get_isin_histogram_from_order_list(self) -> list:
+
+        if self._list_isin_histogram_order_list.__len__() == 0:
+
+            self._get_isin_histogram_from_order_list()
+
+        return  self._list_isin_histogram_order_list
+
+    def get_distinct_isin_list(self) -> list:
+
+       return self._list_distinct_isin_in_order_list
+
+    def get_order_ids_per_isin(self, str_isin: str) -> list:
+
+        return self._my_table_sql_orders_list.get_order_ids_per_isin(str_isin)
+
+    def get_order_vector_per_order_id(self, str_order_id: str) -> list:
+
+        order_vector = [self._my_table_sql_orders_list.get_order_vector_per_order_id(str_order_id)]
+
+        dim = 0
+
+        order_vector.append(self._my_table_sql_orders_ranking_list.get_order_vector_per_order_id(str_order_id))
+
+        dim += 1
+
+        order_vector[dim][0] = self._str_order_vector_ranking_segment_name
+
+        order_vector.append(self._my_table_sql_orders_analyst_list.get_order_vector_per_order_id(str_order_id))
+
+        dim += 1
+
+        order_vector[dim][0] = self._str_order_vector_analyst_segment_name
+
+        order_vector.append(self._my_table_sql_orders_derivate_list.get_order_vector_per_order_id(str_order_id))
+
+        dim += 1
+
+        order_vector[dim][0] = self._str_order_vector_derivate_segment_name
+
+        order_vector.append(self._my_table_sql_orders_fundamentals_list.get_order_vector_per_order_id(str_order_id))
+
+        dim += 1
+
+        order_vector[dim][0] = self._str_order_vector_fundamentals_segment_name
+
+        order_vector.append(self._my_table_sql_orders_performance_list.get_order_vector_per_order_id(str_order_id))
+
+        dim += 1
+
+        order_vector[dim][0] = self._str_order_vector_performance_segment_name
+
+        return order_vector
+
+    def get_order_vectors_per_isin(self, str_isin: str) -> list[list]:
+
+        _list_result = []
+
+        _list_order_ids = self.get_order_ids_per_isin(str_isin)
+
+        if _list_order_ids.__len__() > 0:
+
+            for element in _list_order_ids:
+
+                _list_result.append(self.get_order_vector_per_order_id(element))
+
+        return _list_result
+
+    def get_today_performance_vector_per_isin(self, str_isin: str) -> list:
+
+        _list = list(self._my_report_top_list.get_isin_data_of_combined_overall_score_twenty_day_change_report_data(str_isin).values())
+
+        performance_vector = [_list]
+
+        _list = list(self._my_ranking_watch_list.get_ranking_watch_list_data_per_quote_isin(str_isin).values())
+
+        _list[0] = self._str_order_vector_ranking_segment_name
+
+        performance_vector.append(_list)
+
+        _list = list(self._my_analyst_watch_list.get_analyst_watch_list_data_per_quote_isin(str_isin).values())
+
+        _list[0] = self._str_order_vector_analyst_segment_name
+
+        performance_vector.append(_list)
+
+        _list = list(self._my_derivate_watch_list.get_derivate_watch_list_data_per_quote_isin(str_isin).values())
+
+        _list[0] = self._str_order_vector_derivate_segment_name
+
+        performance_vector.append(_list)
+
+        _list = list(self._my_fundamentals_watch_list.get_fundamentals_watch_list_data_per_quote_isin(str_isin).values())
+
+        _list[0] = self._str_order_vector_fundamentals_segment_name
+
+        performance_vector.append(_list)
+
+        _list = list(self._my_performance_watch_list.get_performance_watch_list_data_per_quote_isin(str_isin).values())
+
+        _list[0] = self._str_order_vector_performance_segment_name
+
+        performance_vector.append(_list)
+
+        return performance_vector
+
+    def delete_order_id(self, str_order_id: str) -> None:
+
+        self._my_table_sql_orders_list.delete_order_id(str_order_id)
+
+        self._my_table_sql_orders_ranking_list.delete_order_id(str_order_id)
+
+        self._my_table_sql_orders_analyst_list.delete_order_id(str_order_id)
+
+        self._my_table_sql_orders_derivate_list.delete_order_id(str_order_id)
+
+        self._my_table_sql_orders_fundamentals_list.delete_order_id(str_order_id)
+
+        self._my_table_sql_orders_performance_list.delete_order_id(str_order_id)
+
     def close_investments(self) -> None:
 
         self._my_file.make_copy_from_file()
@@ -478,10 +672,30 @@ class MyOrders(mySQLDataBase.MySQLDataBase):
 
         self._my_report_top_list.close_sql_data_base()
 
+        self._my_table_sql_orders_ranking_list.close_sql_data_base()
+
+        self._my_table_sql_orders_analyst_list.close_sql_data_base()
+
+        self._my_table_sql_orders_derivate_list.close_sql_data_base()
+
+        self._my_table_sql_orders_fundamentals_list.close_sql_data_base()
+
+        self._my_table_sql_orders_performance_list.close_sql_data_base()
+
 if __name__ == "__main__":
 
     my_orders_list = MyOrders()
-    my_orders_list.update_orders()
-    my_orders_list.automatic_order()
-    print(my_orders_list.get_overall_spending())
+    # my_orders_list.update_orders()
+    # my_orders_list.automatic_order()
+    print(f' ---- Overall Spending: {my_orders_list.get_overall_spending()} ----')
+    # print(my_orders_list.get_isin_histogram_from_order_list())
+    print(my_orders_list.get_distinct_isin_list())
+    print(my_orders_list.get_order_ids_per_isin('AT0000743059'))
+    # print(f' ---- Number of different shares within Order List: {my_orders_list.get_isin_histogram_from_order_list().__len__()} ----')
+    # print(my_orders_list.get_order_ids_per_isin('BE0003816338'))
+    # print(my_orders_list.get_order_vector_per_order_id('2026-10-01-2'))
+    # print(my_orders_list.get_shares_to_order())
+    print(my_orders_list.get_today_performance_vector_per_isin('AT0000743059'))
+    print(my_orders_list.get_order_vectors_per_isin('AT0000743059'))
+
     my_orders_list.close_sql_data_base()

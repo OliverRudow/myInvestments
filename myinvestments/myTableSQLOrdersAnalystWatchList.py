@@ -365,7 +365,6 @@ class MyTableSQLOrdersAnalystWatchList(myTableSQL.MyTableSQL):
                                  self._float_analyst_watch_list_weighted_revision_trend_credit_value,
                                  self._int_analyst_watch_list_number_of_analyst_opinions_value]
 
-
     def _set_sql_table_analyst_watch_list_entire_row(self) -> None:
         if self._list_entire_row is not None:
 
@@ -390,7 +389,6 @@ class MyTableSQLOrdersAnalystWatchList(myTableSQL.MyTableSQL):
                 print(f'---- Operational Error in {__title__}, '
                       f'{self._set_sql_table_analyst_watch_list_entire_row.__name__},'
                       f' the list_entire_row {self._list_entire_row} does not fit the number of columns requirement!')
-
 
     def set_sql_table_analyst_watch_list_entire_row(self,
             dict_analyst_watch_list_data: dict[str, str | int | float | None]) -> None:
@@ -584,6 +582,90 @@ class MyTableSQLOrdersAnalystWatchList(myTableSQL.MyTableSQL):
         self._built_list_entire_row()
 
         self._set_sql_table_analyst_watch_list_entire_row()
+
+    def get_order_vector_per_order_id(self, str_order_id: str) -> list:
+
+        list_result = []
+
+        str_order_id_column_name = self._str_analyst_watch_list_order_id_column_name
+
+        str_text = (f'SELECT * '
+                    f'FROM {self._str_sql_schema}.{self._str_table_name} '
+                    f'WHERE {str_order_id_column_name} = "{str_order_id}" ')
+
+        if self._my_sql_connection and self._my_sql_cursor:
+
+            try:
+
+                self._my_sql_cursor.execute(str_text)
+
+                list_result = list(self._my_sql_cursor.fetchone())
+
+                self._my_sql_connection.commit()
+
+            except sqlite3.OperationalError as err:
+
+                print(
+                    f'---- Operational Error in {__title__}, {self.get_order_vector_per_order_id.__name__} ----, \n'
+                    f'---- the Text {str_text} has caused an Error {err} ! ----')
+
+                exit(1)
+
+            if list_result.__len__() > 0:
+
+                return list_result
+
+            else:
+
+                return []
+
+        else:
+
+            return []
+
+    def delete_order_id(self, str_order_id: str) -> None:
+
+        str_order_id_column_name = self._str_analyst_watch_list_order_id_column_name
+
+        _str_text = (f' SELECT * FROM {self._str_sql_schema}.{self._str_table_name} '
+                     f'WHERE {str_order_id_column_name} = "{str_order_id}" ')
+
+        if self._my_sql_connection and self._my_sql_cursor:
+
+            try:
+
+                self._my_sql_cursor.execute(_str_text)
+
+                list_result = self._my_sql_cursor.fetchone()
+
+                self._my_sql_connection.commit()
+
+            except sqlite3.OperationalError as err:
+
+                print(
+                    f'---- Operational Error in {__title__}, {self.delete_order_id.__name__} ----, \n'
+                    f'---- the Text {_str_text} has caused an Error {err} ! ----')
+
+                exit(1)
+
+            if list_result.__len__() > 0:
+
+                _str_text = (f' DELETE FROM {self._str_sql_schema}.{self._str_table_name} '
+                             f'WHERE {str_order_id_column_name} = "{str_order_id}" ')
+
+                try:
+
+                    self._my_sql_cursor.execute(_str_text)
+
+                    self._my_sql_connection.commit()
+
+                except sqlite3.OperationalError as err:
+
+                    print(
+                        f'---- Operational Error in {__title__}, {self.delete_order_id.__name__} ----, \n'
+                        f'---- the Text {_str_text} has caused an Error {err} ! ----')
+
+                    exit(1)
 
 
 if __name__ == "__main__":

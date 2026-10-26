@@ -584,5 +584,89 @@ class MyTableSQLOrdersDerivateWatchList(myTableSQL.MyTableSQL):
 
         return bool_result
 
+    def get_order_vector_per_order_id(self, str_order_id: str) -> list:
+
+        list_result = []
+
+        str_order_id_column_name = self._str_derivate_watch_list_order_id_column_name
+
+        str_text = (f'SELECT * '
+                    f'FROM {self._str_sql_schema}.{self._str_table_name} '
+                    f'WHERE {str_order_id_column_name} = "{str_order_id}" ')
+
+        if self._my_sql_connection and self._my_sql_cursor:
+
+            try:
+
+                self._my_sql_cursor.execute(str_text)
+
+                list_result = list(self._my_sql_cursor.fetchone())
+
+                self._my_sql_connection.commit()
+
+            except sqlite3.OperationalError as err:
+
+                print(
+                    f'---- Operational Error in {__title__}, {self.get_order_vector_per_order_id.__name__} ----, \n'
+                    f'---- the Text {str_text} has caused an Error {err} ! ----')
+
+                exit(1)
+
+            if list_result.__len__() > 0:
+
+                return list_result
+
+            else:
+
+                return []
+
+        else:
+
+            return []
+
+    def delete_order_id(self, str_order_id: str) -> None:
+
+        str_order_id_column_name = self._str_derivate_watch_list_order_id_column_name
+
+        _str_text = (f' SELECT * FROM {self._str_sql_schema}.{self._str_table_name} '
+                     f'WHERE {str_order_id_column_name} = "{str_order_id}" ')
+
+        if self._my_sql_connection and self._my_sql_cursor:
+
+            try:
+
+                self._my_sql_cursor.execute(_str_text)
+
+                list_result = self._my_sql_cursor.fetchone()
+
+                self._my_sql_connection.commit()
+
+            except sqlite3.OperationalError as err:
+
+                print(
+                    f'---- Operational Error in {__title__}, {self.delete_order_id.__name__} ----, \n'
+                    f'---- the Text {_str_text} has caused an Error {err} ! ----')
+
+                exit(1)
+
+            if list_result.__len__() > 0:
+
+                _str_text = (f' DELETE FROM {self._str_sql_schema}.{self._str_table_name} '
+                             f'WHERE {str_order_id_column_name} = "{str_order_id}" ')
+
+                try:
+
+                    self._my_sql_cursor.execute(_str_text)
+
+                    self._my_sql_connection.commit()
+
+                except sqlite3.OperationalError as err:
+
+                    print(
+                        f'---- Operational Error in {__title__}, {self.delete_order_id.__name__} ----, \n'
+                        f'---- the Text {_str_text} has caused an Error {err} ! ----')
+
+                    exit(1)
+
 if __name__ == "__main__":
     mySQLDB = mySQLDataBase.MySQLDataBase()
